@@ -84,15 +84,11 @@ public class User {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<Service> services = new HashSet<>();
+    private Set<Offer> offers = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<Booking> bookings = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<UserSkill> userSkills = new HashSet<>();
 
     @OneToMany(mappedBy = "fromUser", fetch = FetchType.LAZY)
     @JsonIgnore

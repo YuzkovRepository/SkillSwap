@@ -1,6 +1,7 @@
 package com.example.SkillSwap.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,20 +17,21 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "services", indexes = {
-        @Index(name = "idx_service_user", columnList = "user_id"),
-        @Index(name = "idx_service_skill", columnList = "skill_id")
+@Table(name = "offers", indexes = {
+        @Index(name = "idx_offer_user", columnList = "user_id"),
+        @Index(name = "idx_offer_skill", columnList = "skill_id")
 })
-public class Service {
+public class Offer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long serviceId;
+    Long offerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;
 
+    @Column(length = 100)
     String title;
 
     @Column(columnDefinition = "TEXT")
@@ -39,22 +41,26 @@ public class Service {
     @JoinColumn(name = "skill_id", nullable = false)
     Skill skill;
 
+    @Min(1)
     int price;
 
+    @Min(1)
     int durationMinutes;
 
-    int maxParticipants;
+    @Min(1)
+    int maxParticipants = 1;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    private ServiceType serviceType;
+    private OfferType offerType;
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Column(columnDefinition = "TEXT")
     String address;
 
-    public enum ServiceType {
+    public enum OfferType {
         ONE_TIME,
         RECURRING,
         GROUP
@@ -68,17 +74,21 @@ public class Service {
 
     @PrePersist
     protected void onCreate() {
-        if (serviceType == null) {
-            serviceType = ServiceType.RECURRING;
+        if (offerType == null) {
+            offerType = OfferType.RECURRING;
         }
         if (status == null) {
             status = Status.ACTIVE;
         }
     }
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Booking> bookings = new HashSet<>();
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ServiceAvailability> serviceAvailabilities = new HashSet<>();
+    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<OfferAvailability> offerAvailabilities = new HashSet<>();
+
+    public void clearAvailabilities() {
+        this.offerAvailabilities.clear();
+    }
 }

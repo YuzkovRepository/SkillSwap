@@ -20,7 +20,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "bookings", indexes = {
         @Index(name = "idx_booking_user", columnList = "user_id"),
-        @Index(name = "idx_booking_service", columnList = "service_id"),
+        @Index(name = "idx_booking_offer", columnList = "offer_id"),
         @Index(name = "idx_booking_status", columnList = "status")
 })
 public class Booking {
@@ -33,8 +33,8 @@ public class Booking {
     User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_id", nullable = false)
-    Service service;
+    @JoinColumn(name = "offer_id", nullable = false)
+    Offer offer;
 
     @Enumerated(EnumType.STRING)
     Status status;

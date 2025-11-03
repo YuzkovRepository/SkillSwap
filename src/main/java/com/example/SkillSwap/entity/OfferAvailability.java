@@ -17,15 +17,15 @@ import java.time.LocalTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "service_availability")
-public class ServiceAvailability {
+@Table(name = "offer_availability")
+public class OfferAvailability {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long serviceAvailabilityId;
+    Long offerAvailabilityId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_id", nullable = false)
-    Service service;
+    @JoinColumn(name = "offer_id", nullable = false)
+    Offer offer;
 
     @Min(1) @Max(7)
     Short dayOfWeek;

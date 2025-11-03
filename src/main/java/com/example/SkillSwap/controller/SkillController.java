@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 @RequestMapping(value = "api/v1/skills")
 public class SkillController {
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(SkillController.class);
     final private SkillService skillService;
 
     @PostMapping("/create")

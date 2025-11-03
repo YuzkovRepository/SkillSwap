@@ -6,6 +6,7 @@ import com.example.SkillSwap.entity.Skill;
 import com.example.SkillSwap.exception.CommonException;
 import com.example.SkillSwap.repository.SkillRepository;
 import com.example.SkillSwap.service.SkillService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ public class SkillServiceImpl implements SkillService {
     final private SkillRepository skillRepository;
 
     @Override
+    @Transactional
     public SkillCreateResponseDTO addSkill(SkillCreateRequestDTO request) {
         if (skillRepository.existsByName(request.name())){
             throw new CommonException("Skill '" + request.name() + "' already exists");
@@ -34,6 +36,7 @@ public class SkillServiceImpl implements SkillService {
     }
 
     @Override
+    @Transactional
     public void deleteSkill(Long id) {
         Skill skill = skillRepository.findById(id)
                 .orElseThrow(() -> new CommonException("Skill not found with id: " + id));

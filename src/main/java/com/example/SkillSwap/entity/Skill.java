@@ -55,8 +55,5 @@ public class Skill {
     private Set<Skill> skills = new HashSet<>();
 
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<UserSkill> userSkills = new HashSet<>();
-
-    @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<Service> services = new HashSet<>();
+    private Set<Offer> offers = new HashSet<>();
 }

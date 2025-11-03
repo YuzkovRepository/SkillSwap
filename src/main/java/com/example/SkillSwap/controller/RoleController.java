@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "Роли", description = "Методы управления ролями пользователей и правами")
 public class RoleController {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(RoleController.class);
     @Autowired
     private RoleService roleService;
 
