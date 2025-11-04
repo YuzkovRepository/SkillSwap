@@ -47,9 +47,13 @@ public class User {
     int balance;
     int level;
 
-    @Digits(integer = 1, fraction = 1)
-    @Column(precision = 2, scale = 1)
+    @Digits(integer = 1, fraction = 2)
+    @Column(precision = 3, scale = 2)
     private BigDecimal trustScore;
+
+    @Digits(integer = 1, fraction = 2)
+    @Column(precision = 3, scale = 2)
+    private BigDecimal rating;
 
     @Column(nullable = false)
     LocalDateTime createdAt;
@@ -62,6 +66,7 @@ public class User {
         updatedAt = LocalDateTime.now();
         balance = 0;
         level = 0;
+        trustScore = BigDecimal.valueOf(0);
     }
 
     @PreUpdate

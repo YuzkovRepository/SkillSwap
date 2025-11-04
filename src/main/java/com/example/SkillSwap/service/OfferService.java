@@ -3,7 +3,9 @@ package com.example.SkillSwap.service;
 import com.example.SkillSwap.dto.OfferingCreateRequestDTO;
 import com.example.SkillSwap.dto.OfferingResponseDTO;
 import com.example.SkillSwap.dto.OfferingUpdateRequestDTO;
+import com.example.SkillSwap.dto.ServiceSearchResponseDTO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface OfferService {
@@ -12,4 +14,6 @@ public interface OfferService {
     List<OfferingResponseDTO> getOffersByUser(Long id);
     List<OfferingResponseDTO> getOffers();
     OfferingResponseDTO updateOffer(OfferingUpdateRequestDTO request);
+    List<ServiceSearchResponseDTO> searchServicesBySkill(String skillName, Integer minPrice, Integer maxPrice,
+                                                         BigDecimal minRating, Long customerId);
 }

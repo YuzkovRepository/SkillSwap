@@ -1,6 +1,7 @@
 package com.example.SkillSwap.controller;
 
 import com.example.SkillSwap.dto.*;
+import com.example.SkillSwap.security.CustomUserDetails;
 import com.example.SkillSwap.service.OfferService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -8,8 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -91,5 +96,30 @@ public class OfferingController {
                     HttpStatus.BAD_REQUEST.value(), "Failed to update offer");
             return ResponseEntity.badRequest().body(errorResponse);
         }
+    }
+
+    @PreAuthorize("hasAuthority('SEARCH_SERVICE')")
+    @GetMapping("/search")
+    public ResponseEntity<List<ServiceSearchResponseDTO>> searchServices(
+            @RequestParam String skill,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            @RequestParam(required = false) BigDecimal minRating,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long customerId = extractUserId(userDetails);
+
+        List<ServiceSearchResponseDTO> results = offerService.searchServicesBySkill(
+                skill, minPrice, maxPrice, minRating, customerId
+        );
+
+        return ResponseEntity.ok(results);
+    }
+
+    private Long extractUserId(UserDetails userDetails) {
+        if (userDetails instanceof CustomUserDetails customUser) {
+            return customUser.getId();
+        }
+        return null;
     }
 }

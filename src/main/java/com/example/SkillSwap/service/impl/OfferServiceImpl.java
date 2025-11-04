@@ -3,6 +3,7 @@ package com.example.SkillSwap.service.impl;
 import com.example.SkillSwap.dto.OfferingCreateRequestDTO;
 import com.example.SkillSwap.dto.OfferingResponseDTO;
 import com.example.SkillSwap.dto.OfferingUpdateRequestDTO;
+import com.example.SkillSwap.dto.ServiceSearchResponseDTO;
 import com.example.SkillSwap.entity.Offer;
 import com.example.SkillSwap.entity.Skill;
 import com.example.SkillSwap.entity.User;
@@ -16,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -97,6 +99,29 @@ public class OfferServiceImpl implements OfferService {
         offerRepository.save(offer);
 
         return mapOfferToDTO(offer);
+    }
+
+    public List<ServiceSearchResponseDTO> searchServicesBySkill(String skillName, Integer minPrice, Integer maxPrice,
+                                                                BigDecimal minRating, Long customerId) {
+        List<Object[]> results = offerRepository.searchServicesBySkill(
+                skillName, minPrice, maxPrice, minRating, customerId
+        );
+
+        return results.stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    private ServiceSearchResponseDTO mapToDTO(Object[] row) {
+        return new ServiceSearchResponseDTO(
+                ((Number) row[0]).longValue(),
+                (String) row[1],
+                (Integer) row[2],
+                (String) row[3],
+                (String) row[4],
+                (BigDecimal) row[5],
+                (String) row[6]
+        );
     }
 
     private OfferingResponseDTO mapOfferToDTO(Offer offer){
