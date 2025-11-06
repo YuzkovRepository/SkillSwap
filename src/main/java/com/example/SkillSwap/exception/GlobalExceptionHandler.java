@@ -1,6 +1,9 @@
 package com.example.SkillSwap.exception;
 
+import com.example.SkillSwap.service.impl.BookingServiceImpl;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,14 +21,17 @@ import java.util.Map;
 @ControllerAdvice
 @RestController
 public class GlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(CommonException.class)
     public ResponseEntity<ErrorResponseDTO> handleCommonException(CommonException ex) {
+        logger.warn("Business exception: {}", ex.getMessage());
+
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage()
         );
-        return ResponseEntity.badRequest().body(errorResponse);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

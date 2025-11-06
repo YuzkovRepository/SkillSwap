@@ -24,4 +24,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "FROM User u JOIN u.userRoles ur JOIN ur.role r JOIN r.rolePermissions rp JOIN rp.permission p " +
             "WHERE u.login = :login")
     List<RolePermissionResponseDTO> findRolesAndPermissionsByLogin(@Param("login") String login);
+
+    @Query("SELECT DISTINCT p.permissionName " +
+            "FROM User u " +
+            "JOIN u.userRoles ur " +
+            "JOIN ur.role r " +
+            "JOIN r.rolePermissions rp " +
+            "JOIN rp.permission p " +
+            "WHERE u.userId = :userId")
+    List<String> findUserPermissions(@Param("userId") Long userId);
 }
