@@ -11,6 +11,7 @@ import com.example.SkillSwap.repository.BookingRepository;
 import com.example.SkillSwap.repository.OfferRepository;
 import com.example.SkillSwap.repository.UserRepository;
 import com.example.SkillSwap.service.BookingService;
+import com.example.SkillSwap.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -25,6 +26,8 @@ public class BookingServiceImpl implements BookingService {
     final private BookingRepository bookingRepository;
     final private OfferRepository offerRepository;
     final private UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final JitsiMeetService jitsiMeetService;
 
     @Transactional
     @Override
@@ -39,7 +42,7 @@ public class BookingServiceImpl implements BookingService {
         int durationMinutes = offer.getDurationMinutes();
 
         AvailabilityCheckResult availabilityResult = availabilityService.checkAvailability(bookingRequestDTO.offerId(),
-                bookingRequestDTO.scheduledDateTime(), durationMinutes);
+                bookingRequestDTO.scheduledDateTime(), durationMinutes, null);
 
         logger.info("Availability check for offer {} at {}: {} - {}",
                 bookingRequestDTO.offerId(), bookingRequestDTO.scheduledDateTime(),
@@ -68,7 +71,80 @@ public class BookingServiceImpl implements BookingService {
         return mapToDTO(savedBooking, offer, user);
     }
 
-    private BookingCreateResponseDTO mapToDTO(Booking booking, Offer offer, User user){
+    @Transactional
+    public BookingCreateResponseDTO confirmBooking(Long bookingId, Long providerId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CommonException("Booking not found"));
+
+        if (!booking.getOffer().getUser().getUserId().equals(providerId)) {
+            throw new CommonException("You cannot confirm this booking");
+        }
+
+        if (booking.getStatus() != Booking.Status.PENDING) {
+            throw new CommonException("The booking has already been processed");
+        }
+
+        AvailabilityCheckResult availability = availabilityService.checkAvailability(
+                booking.getOffer().getOfferId(),
+                booking.getScheduledDatetime(),
+                booking.getDurationMinutes(),
+                bookingId
+        );
+
+        if (!availability.isAvailable()) {
+            throw new CommonException("Time is no longer available: " + availability.getMessage());
+        }
+
+        String meetUrl = jitsiMeetService.createMeetingLink(bookingId);
+
+        booking.setMeetingUrl(meetUrl);
+        booking.setMeetingId("Jitsi-" + bookingId);
+        booking.setStatus(Booking.Status.CONFIRMED);
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        BookingCreateResponseDTO response = mapToDTO(savedBooking, booking.getOffer(), booking.getUser());
+
+        notificationService.notifyCustomerAboutConfirmation(savedBooking.getUser().getUserId(), response);
+        notificationService.notifyProviderAboutConfirmation(providerId, response);
+
+        return response;
+    }
+
+    @Transactional
+    public BookingCreateResponseDTO rejectBooking(Long bookingId, Long providerId, String reason) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CommonException("Booking not found"));
+
+        if (!booking.getOffer().getUser().getUserId().equals(providerId)) {
+            throw new CommonException("You cannot reject this booking");
+        }
+
+        if (booking.getStatus() != Booking.Status.PENDING) {
+            throw new CommonException("The booking has already been processed");
+        }
+
+        booking.setStatus(Booking.Status.CANCELLED);
+        if (reason != null && !reason.trim().isEmpty()) {
+            booking.setCustomerNotes(
+                    (booking.getCustomerNotes() != null ? booking.getCustomerNotes() + "\n" : "") +
+                            "Причина отказа: " + reason
+            );
+        }
+
+        Booking savedBooking = bookingRepository.save(booking);
+        BookingCreateResponseDTO response = mapToDTO(savedBooking, savedBooking.getOffer(), savedBooking.getUser());
+        notificationService.notifyCustomerAboutRejection(savedBooking.getUser().getUserId(), response, reason);
+
+        return response;
+    }
+
+    private BookingCreateResponseDTO mapToDTO(Booking booking, Offer offer, User user) {
+        boolean canJoinMeeting = jitsiMeetService.canJoinMeeting(
+                booking.getScheduledDatetime(),
+                booking.getDurationMinutes()
+        );
+
         return new BookingCreateResponseDTO(
                 offer.getOfferId(),
                 offer.getTitle(),
@@ -80,7 +156,9 @@ public class BookingServiceImpl implements BookingService {
                 booking.getTotalPrice(),
                 booking.getStatus().toString(),
                 booking.getCustomerNotes(),
-                booking.getCreatedAt()
+                booking.getCreatedAt(),
+                booking.getMeetingUrl(),
+                canJoinMeeting
         );
     }
 }

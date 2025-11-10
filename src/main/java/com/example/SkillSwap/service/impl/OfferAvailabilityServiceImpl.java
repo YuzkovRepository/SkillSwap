@@ -13,6 +13,8 @@ import com.example.SkillSwap.repository.OfferRepository;
 import com.example.SkillSwap.service.BookingService;
 import com.example.SkillSwap.service.OfferAvailabilityService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -23,6 +25,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class OfferAvailabilityServiceImpl implements OfferAvailabilityService {
+    private static final Logger logger = LoggerFactory.getLogger(BookingServiceImpl.class);
     final private OfferAvailabilityRepository availabilityRepository;
     final private OfferRepository offerRepository;
     final private BookingRepository bookingRepository;
@@ -69,45 +72,82 @@ public class OfferAvailabilityServiceImpl implements OfferAvailabilityService {
         );
     }
 
-    public AvailabilityCheckResult checkAvailability(Long offerId, LocalDateTime requestedDateTime, int durationMinutes){
+    public AvailabilityCheckResult checkAvailability(Long offerId, LocalDateTime requestedDateTime,
+                                                     int durationMinutes, Long excludeBookingId) {
         DayOfWeek requestDayOfWeek = requestedDateTime.getDayOfWeek();
         Short dayOfWeek = (short) requestDayOfWeek.getValue();
 
         LocalTime startTime = requestedDateTime.toLocalTime();
         LocalTime endTime = startTime.plusMinutes(durationMinutes);
 
+        logger.info("Checking availability for offer {} on day {}: {} to {}",
+                offerId, dayOfWeek, startTime, endTime);
+
         List<Object[]> availabilityResults = availabilityRepository.findByOfferOfferIdAndDayOfWeek(offerId, dayOfWeek);
+
         if (availabilityResults.isEmpty()){
+            logger.info("No availability slots found for offer {} on day {}", offerId, dayOfWeek);
             return AvailabilityCheckResult.noAvailabilitySlots();
         }
 
-        boolean isAvailability = false;
+        boolean isWithinAvailableHours = false;
         for (Object[] ob : availabilityResults){
-            LocalTime requestStartTime = ((java.sql.Time) ob[2]).toLocalTime();
-            LocalTime requestEndTime = ((java.sql.Time) ob[3]).toLocalTime();
+            LocalTime slotStartTime = ((java.sql.Time) ob[2]).toLocalTime();
+            LocalTime slotEndTime = ((java.sql.Time) ob[3]).toLocalTime();
 
-            if (!startTime.isBefore(requestStartTime) && !endTime.isAfter(requestEndTime)){
-                isAvailability = true;
+            logger.info("Checking against slot: {} - {}", slotStartTime, slotEndTime);
+
+            if (startTime.compareTo(slotStartTime) >= 0 && endTime.compareTo(slotEndTime) <= 0) {
+                isWithinAvailableHours = true;
+                logger.info("Time slot fits within available hours");
                 break;
             }
         }
 
-        if (!isAvailability){
+        if (!isWithinAvailableHours){
+            logger.info("Requested time {} - {} is outside available hours", startTime, endTime);
             return AvailabilityCheckResult.outsideAvailableHours();
         }
 
-        boolean isTimeSlotBooked = isTimeSlotBooked(offerId, requestedDateTime, durationMinutes);
+        boolean isTimeSlotBooked;
+        if (excludeBookingId != null) {
+            isTimeSlotBooked = isTimeSlotBooked(offerId, requestedDateTime, durationMinutes, excludeBookingId);
+        } else {
+            isTimeSlotBooked = isTimeSlotBooked(offerId, requestedDateTime, durationMinutes);
+        }
+
         if (isTimeSlotBooked) {
+            logger.info("Time slot is already booked");
             return AvailabilityCheckResult.timeSlotAlreadyBooked();
         }
 
+        logger.info("Time slot is available");
         return AvailabilityCheckResult.available();
     }
 
-    public boolean isTimeSlotBooked(Long offerId, LocalDateTime startDateTime, int durationMinutes) {
-        LocalDateTime endDateTime = startDateTime.plusMinutes(durationMinutes);
-        boolean isTimeSlotBooked = bookingRepository.hasOverlappingBookings(offerId, startDateTime, endDateTime);
+    public boolean isTimeSlotBooked(Long offerId, LocalDateTime startDateTime,
+                                    int durationMinutes) {
+        return isTimeSlotBooked(offerId, startDateTime, durationMinutes, null);
+    }
 
+    public boolean isTimeSlotBooked(Long offerId, LocalDateTime startDateTime,
+                                    int durationMinutes, Long excludeBookingId) {
+        LocalDateTime endDateTime = startDateTime.plusMinutes(durationMinutes);
+
+        logger.info("Checking time slot overlap for offer {}: {} to {}, exclude booking: {}",
+                offerId, startDateTime, endDateTime, excludeBookingId);
+
+        boolean isTimeSlotBooked;
+
+        if (excludeBookingId != null) {
+            isTimeSlotBooked = bookingRepository.hasOverlappingBookings(
+                    offerId, startDateTime, endDateTime, excludeBookingId);
+        } else {
+            isTimeSlotBooked = bookingRepository.hasOverlappingBookings(
+                    offerId, startDateTime, endDateTime);
+        }
+
+        logger.info("Time slot booked result for offer {}: {}", offerId, isTimeSlotBooked);
         return isTimeSlotBooked;
     }
 }

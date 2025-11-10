@@ -5,4 +5,6 @@ import com.example.SkillSwap.dto.BookingCreateResponseDTO;
 
 public interface BookingService {
     BookingCreateResponseDTO createBooking(BookingCreateRequestDTO bookingRequestDTO, Long customerId);
+    BookingCreateResponseDTO confirmBooking(Long bookingId, Long providerId);
+    BookingCreateResponseDTO rejectBooking(Long bookingId, Long providerId, String reason);
 }

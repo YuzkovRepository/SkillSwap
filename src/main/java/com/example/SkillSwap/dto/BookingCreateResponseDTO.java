@@ -13,5 +13,7 @@ public record BookingCreateResponseDTO(
         int price,
         String status,
         String customerNotes,
-        LocalDateTime createdAt
-){}
+        LocalDateTime createdAt,
+        String meetingUrl,
+        boolean canJoinMeeting
+) {}

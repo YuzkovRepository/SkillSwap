@@ -39,6 +39,12 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     Status status;
 
+    @Column(name = "meeting_url", length = 500)
+    private String meetingUrl;
+
+    @Column(name = "meeting_id")
+    private String meetingId;
+
     LocalDateTime scheduledDatetime;
 
     @Min(0)
