@@ -12,6 +12,7 @@ import com.example.SkillSwap.repository.OfferRepository;
 import com.example.SkillSwap.repository.UserRepository;
 import com.example.SkillSwap.service.BookingService;
 import com.example.SkillSwap.service.NotificationService;
+import com.example.SkillSwap.service.TransactionService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ public class BookingServiceImpl implements BookingService {
     final private BookingRepository bookingRepository;
     final private OfferRepository offerRepository;
     final private UserRepository userRepository;
+    final private TransactionService transactionService;
     private final NotificationService notificationService;
     private final JitsiMeetService jitsiMeetService;
 
@@ -95,6 +97,8 @@ public class BookingServiceImpl implements BookingService {
             throw new CommonException("Time is no longer available: " + availability.getMessage());
         }
 
+        transactionService.reservePayment(booking);
+
         String meetUrl = jitsiMeetService.createMeetingLink(bookingId);
 
         booking.setMeetingUrl(meetUrl);
@@ -122,6 +126,8 @@ public class BookingServiceImpl implements BookingService {
 
         if (booking.getStatus() != Booking.Status.PENDING) {
             throw new CommonException("The booking has already been processed");
+        } else if (booking.getStatus() == Booking.Status.CONFIRMED) {
+            transactionService.refundPayment(booking);
         }
 
         booking.setStatus(Booking.Status.CANCELLED);

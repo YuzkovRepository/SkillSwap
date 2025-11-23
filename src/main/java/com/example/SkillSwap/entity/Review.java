@@ -33,6 +33,10 @@ public class Review {
     @JoinColumn(name = "target_user_id", nullable = false)
     User targetUser;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id", nullable = false)
+    Booking booking;
+
     @Min(0) @Max(5)
     @Column(nullable = false)
     Integer rating;

@@ -16,6 +16,7 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
     boolean existsByOfferAvailabilities(Offer offer);
     List<Offer> findOfferByUser(User user);
 
+
     @Query(value = "SELECT * FROM search_services_by_skill(:skillName, :minPrice, :maxPrice, :minRating, :customerId)",
             nativeQuery = true)
     List<Object[]>  searchServicesBySkill(

@@ -227,6 +227,12 @@ public class NotificationServiceImpl implements NotificationService {
     public enum NotificationType {
         BOOKING_CONFIRMED,
         BOOKING_REJECTED,
+        PAYMENT_RESERVED,
+        PAYMENT_COMPLETED,
+        PAYMENT_REFUNDED,
+        PARTIAL_REFUND,
+        PENALTY_RECEIVED,
+        NEW_REVIEW,
         LESSON_STARTED,
         LESSON_COMPLETED,
         SYSTEM_MESSAGE

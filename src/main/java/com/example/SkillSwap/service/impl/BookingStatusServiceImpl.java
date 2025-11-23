@@ -3,6 +3,7 @@ package com.example.SkillSwap.service.impl;
 import com.example.SkillSwap.entity.Booking;
 import com.example.SkillSwap.repository.BookingRepository;
 import com.example.SkillSwap.service.NotificationService;
+import com.example.SkillSwap.service.TransactionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.List;
 public class BookingStatusServiceImpl {
     private static final Logger logger = LoggerFactory.getLogger(BookingServiceImpl.class);
     private final BookingRepository bookingRepository;
+    private final TransactionService transactionService;
     private final NotificationService notificationService;
 
     @Scheduled(fixedRate = 300000)
@@ -71,6 +73,8 @@ public class BookingStatusServiceImpl {
     private void completeBooking(Booking booking) {
         try {
             booking.setStatus(Booking.Status.COMPLETED);
+
+            transactionService.completePayment(booking);
             bookingRepository.save(booking);
 
             logger.info("Booking {} completed", booking.getBookingId());
